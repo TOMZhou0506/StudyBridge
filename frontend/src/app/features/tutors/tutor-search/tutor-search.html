@@ -1,0 +1,220 @@
+<!-- A3 Task 4: Renders the tutor filter form and matching tutor summaries. -->
+<div class="container py-4">
+    <header class="mb-4">
+        <h1>Find a tutor</h1>
+        <p class="text-muted">
+            All filters are optional. Choose only the criteria you need.
+        </p>
+    </header>
+
+    @if (isOffline() && offlineFetchedAt()) {
+    <div class="alert alert-warning" role="status">
+        Offline — showing tutor search data from
+        {{ offlineFetchedAt() | date: 'shortTime' }}.
+        This information may be out of date.
+    </div>
+    }
+
+    @if (errorMessage()) {
+    <div class="alert alert-danger" role="alert">
+        {{ errorMessage() }}
+    </div>
+    }
+
+    <!-- Collects the optional tutor search filters. -->
+    <form class="card mb-4" [formGroup]="searchForm" (ngSubmit)="searchTutors()">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label for="subject" class="form-label">
+                        Subject
+                    </label>
+
+                    <select id="subject" class="form-select" formControlName="subject">
+                        <option value="">All subjects</option>
+
+                        @if (isLoadingSubjects()) {
+                        <option disabled>Loading subjects...</option>
+                        } @else {
+                        @for (subject of subjects(); track subject._id) {
+                        <option [value]="subject.name">
+                            {{ subject.name }}
+                        </option>
+                        }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label for="min-rating" class="form-label">
+                        Minimum rating
+                    </label>
+
+                    <input id="min-rating" type="number" class="form-control" formControlName="minRating" min="0"
+                        max="5" step="0.5" placeholder="For example, 4" />
+
+                    @if (
+                    searchForm.controls.minRating.touched &&
+                    searchForm.controls.minRating.invalid
+                    ) {
+                    <div class="text-danger small mt-1">
+                        Rating must be between 0 and 5.
+                    </div>
+                    }
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label for="min-price" class="form-label">
+                        Minimum hourly price
+                    </label>
+
+                    <input id="min-price" type="number" class="form-control" formControlName="minPrice" min="0" step="1"
+                        placeholder="Minimum price" />
+
+                    @if (
+                    searchForm.controls.minPrice.touched &&
+                    searchForm.controls.minPrice.invalid
+                    ) {
+                    <div class="text-danger small mt-1">
+                        Minimum price cannot be negative.
+                    </div>
+                    }
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label for="max-price" class="form-label">
+                        Maximum hourly price
+                    </label>
+
+                    <input id="max-price" type="number" class="form-control" formControlName="maxPrice" min="0" step="1"
+                        placeholder="Maximum price" />
+
+                    @if (
+                    searchForm.controls.maxPrice.touched &&
+                    searchForm.controls.maxPrice.invalid
+                    ) {
+                    <div class="text-danger small mt-1">
+                        Maximum price cannot be negative.
+                    </div>
+                    }
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check">
+                        <input id="available-this-week" type="checkbox" class="form-check-input"
+                            formControlName="availableThisWeek" />
+
+                        <label for="available-this-week" class="form-check-label">
+                            Available this week
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-footer d-flex gap-2">
+            <button type="submit" class="btn btn-primary" [disabled]="isOffline() || isSearching()">
+                @if (isSearching()) {
+                Searching...
+                } @else {
+                Search tutors
+                }
+            </button>
+
+            <button type="button" class="btn btn-outline-dark clear-filters-button"
+                [disabled]="isOffline() || isSearching()" (click)="resetSearch()">
+                Clear filters
+            </button>
+        </div>
+    </form>
+
+    @if (isSearching()) {
+    <div class="d-flex align-items-center gap-2" role="status">
+        <div class="spinner-border" aria-hidden="true"></div>
+        <span>Searching for tutors...</span>
+    </div>
+    } @else if (hasSearched() && !errorMessage()) {
+    <!-- Displays the tutor summaries returned by the search API. -->
+    <section aria-labelledby="search-results-title">
+        <h2 id="search-results-title" class="h4 mb-3">
+            Search results
+        </h2>
+
+        @if (tutors().length > 0) {
+        <div class="row g-3">
+            @for (tutor of tutors(); track tutor.userId) {
+            <div class="col-12 col-lg-6">
+                <article class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div class="d-flex align-items-start gap-3">
+                                <!-- A3 HD Task 3: Displays the persisted photo or tutor initials. -->
+                                <app-tutor-avatar
+                                    [photoUrl]="tutor.photoUrl"
+                                    [fullName]="tutor.fullName"
+                                />
+
+                                <div>
+                                <h3 class="h5 mb-1">
+                                    {{ tutor.fullName }}
+                                </h3>
+
+                                @if (tutor.averageRating === null) {
+                                <p class="text-muted mb-2">
+                                    No ratings yet
+                                </p>
+                                } @else {
+                                <p class="mb-2">
+                                    Rating: {{ tutor.averageRating | number: '1.1-1' }} / 5
+                                    <span class="text-muted">
+                                        ({{ tutor.reviewCount }} reviews)
+                                    </span>
+                                </p>
+                                }
+                                </div>
+                            </div>
+
+                            <span class="badge text-bg-primary">
+                                ${{ tutor.hourlyRate }} / hour
+                            </span>
+                        </div>
+
+                        <p class="card-text">
+                            {{ tutor.bio || 'No biography provided.' }}
+                        </p>
+
+                        <div class="mb-3">
+                            <span class="fw-semibold">Subjects:</span>
+
+                            @for (
+                            subject of tutor.subjects;
+                            track subject
+                            ) {
+                            <span class="badge text-bg-light ms-1">
+                                {{ subject }}
+                            </span>
+                            } @empty {
+                            <span class="text-muted ms-1">
+                                No subjects listed
+                            </span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-transparent">
+                        <a class="btn btn-outline-primary" [routerLink]="['/tutors', tutor.userId]">
+                            View tutor details
+                        </a>
+                    </div>
+                </article>
+            </div>
+            }
+        </div>
+        } @else {
+        <div class="alert alert-info" role="status">
+            No tutors matched the selected filters.
+        </div>
+        }
+    </section>
+    }
+</div>

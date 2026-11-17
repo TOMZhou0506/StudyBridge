@@ -1,0 +1,216 @@
+<div class="container py-4">
+  <header class="mb-4">
+    <h1>My bookings</h1>
+    <p class="text-muted mb-0">
+      Review your learning sessions and cancel upcoming bookings.
+    </p>
+  </header>
+
+  @if (isOffline() && offlineFetchedAt()) {
+  <div class="alert alert-warning" role="status">
+    Offline — showing booking data from
+    {{ offlineFetchedAt() | date: 'shortTime' }}.
+    This information may be out of date.
+  </div>
+  }
+
+  @if (successMessage()) {
+  <div class="alert alert-success" role="status">
+    {{ successMessage() }}
+  </div>
+  }
+
+  @if (isLoading()) {
+  <div class="d-flex align-items-center gap-2" role="status">
+    <div class="spinner-border" aria-hidden="true"></div>
+    <span>Loading your bookings...</span>
+  </div>
+  } @else if (loadErrorMessage()) {
+  <div class="alert alert-danger" role="alert">
+    {{ loadErrorMessage() }}
+  </div>
+  } @else if (bookings().length === 0) {
+  <div class="alert alert-info" role="status">
+    You do not have any bookings yet.
+  </div>
+  } @else {
+  <!-- A3 Task 7: Displays the learner's bookings and legal cancel actions. -->
+  <div class="vstack gap-3">
+    @for (booking of bookings(); track booking._id) {
+    <article class="card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between gap-3">
+          <div>
+            <h2 class="h5 mb-1">Learning session</h2>
+            <p class="text-muted small mb-0">
+              Requested {{ booking.createdDate | date: 'medium' }}
+            </p>
+          </div>
+
+          @switch (booking.status) {
+          @case ('requested') {
+          <span class="badge text-bg-warning align-self-start">
+            Requested
+          </span>
+          }
+          @case ('confirmed') {
+          <span class="badge text-bg-primary align-self-start">
+            Confirmed
+          </span>
+          }
+          @case ('completed') {
+          <span class="badge text-bg-success align-self-start">
+            Completed
+          </span>
+          }
+          @case ('cancelled') {
+          <span class="badge text-bg-secondary align-self-start">
+            Cancelled
+          </span>
+          }
+          }
+        </div>
+
+        <dl class="row mt-3 mb-0">
+          <dt class="col-sm-3">Tutor</dt>
+          <dd class="col-sm-9" [title]="'Tutor ID: ' + booking.tutorId">
+            {{ tutorNames()[booking.tutorId] || 'Tutor name unavailable' }}
+          </dd>
+
+          <dt class="col-sm-3">Subject</dt>
+          <dd class="col-sm-9" [title]="'Subject ID: ' + booking.subjectId">
+            {{ subjectNames()[booking.subjectId] || 'Subject name unavailable' }}
+          </dd>
+
+          <dt class="col-sm-3">Agreed hourly rate</dt>
+          <dd class="col-sm-9">${{ booking.agreedRate }}</dd>
+
+          <dt class="col-sm-3">Booking number</dt>
+          <dd
+            class="col-sm-9"
+            [title]="'Booking ID: ' + booking._id"
+          >
+            {{ 'SB-' + booking._id.slice(-8).toUpperCase() }}
+          </dd>
+        </dl>
+
+        @if (actionErrors()[booking._id]; as actionError) {
+        <div class="alert alert-danger mt-3 mb-0" role="alert">
+          {{ actionError }}
+        </div>
+        }
+
+        @if (canCancel(booking)) {
+        <button class="btn btn-outline-danger mt-3" type="button" [disabled]="actionBookingId() !== null"
+          (click)="cancelBooking(booking)">
+          @if (actionBookingId() === booking._id) {
+          <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+          Cancelling...
+          } @else {
+          Cancel booking
+          }
+        </button>
+        }
+
+        @if (booking.status === 'completed') {
+        <!-- A3 Task 8: Shows the submitted review or a validated review form. -->
+        <section class="border-top mt-4 pt-3" aria-label="Session review">
+          @if (submittedReviews()[booking._id]; as submittedReview) {
+          <div class="alert alert-success mb-0" role="status">
+            <h3 class="h6">Review submitted</h3>
+            <p class="mb-1">
+              Rating: <strong>{{ submittedReview.rating }} / 5</strong>
+            </p>
+            <p class="mb-0">
+              {{ submittedReview.comment || 'No comment provided.' }}
+            </p>
+          </div>
+          } @else if (
+          reviewedBookingMessages()[booking._id];
+          as reviewedMessage
+          ) {
+          <div class="alert alert-warning mb-0" role="alert">
+            {{ reviewedMessage }}
+          </div>
+          } @else if (getReviewForm(booking._id); as reviewForm) {
+          <h3 class="h6">Review this session</h3>
+
+          <form class="row g-3" [formGroup]="reviewForm" (ngSubmit)="submitReview(booking)">
+            <div class="col-12 col-md-4">
+              <label class="form-label" [for]="'rating-' + booking._id">
+                Rating
+              </label>
+
+              <select class="form-select" formControlName="rating" [id]="'rating-' + booking._id" [class.is-invalid]="
+                  reviewForm.controls.rating.touched &&
+                  reviewForm.controls.rating.invalid
+                ">
+                <option [ngValue]="null" disabled>Select a rating</option>
+                <option [ngValue]="1">1 - Poor</option>
+                <option [ngValue]="2">2 - Fair</option>
+                <option [ngValue]="3">3 - Good</option>
+                <option [ngValue]="4">4 - Very good</option>
+                <option [ngValue]="5">5 - Excellent</option>
+              </select>
+
+              @if (
+              reviewForm.controls.rating.touched &&
+              reviewForm.controls.rating.invalid
+              ) {
+              <div class="invalid-feedback">
+                Select a rating from 1 to 5.
+              </div>
+              }
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" [for]="'comment-' + booking._id">
+                Comment <span class="text-muted">(optional)</span>
+              </label>
+
+              <textarea class="form-control" formControlName="comment" [id]="'comment-' + booking._id"
+                [class.is-invalid]="
+                  reviewForm.controls.comment.touched &&
+                  reviewForm.controls.comment.invalid
+                " maxlength="500" rows="3"></textarea>
+
+              <div class="form-text">
+                {{ reviewForm.controls.comment.value.length }} / 500 characters
+              </div>
+
+              @if (reviewForm.controls.comment.hasError('maxlength')) {
+              <div class="invalid-feedback">
+                The comment cannot exceed 500 characters.
+              </div>
+              }
+            </div>
+
+            @if (reviewErrors()[booking._id]; as reviewError) {
+            <div class="col-12">
+              <div class="alert alert-danger mb-0" role="alert">
+                {{ reviewError }}
+              </div>
+            </div>
+            }
+
+            <div class="col-12">
+              <button class="btn btn-primary" type="submit"
+                [disabled]="isOffline() || reviewActionBookingId() !== null">
+                @if (reviewActionBookingId() === booking._id) {
+                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                Submitting review...
+                } @else {
+                Submit review
+                }
+              </button>
+            </div>
+          </form>
+          }
+        </section>
+        }
+      </div>
+    </article>
+    }
+  </div>
+  }
+</div>

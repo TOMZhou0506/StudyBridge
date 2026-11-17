@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build output and caches
+dist/
+.angular/
+coverage/
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+*-key.json
+service-account*.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+.idea/

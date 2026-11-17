@@ -1,0 +1,185 @@
+<!-- A3 Task 5: Renders the slot publishing form and the tutor's slot list. -->
+<div class="container py-4">
+  <header class="mb-4">
+    <h1>My availability slots</h1>
+    <p class="text-muted">
+      Publish new tutoring times and manage your existing slots.
+    </p>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert-danger" role="alert">
+      <p class="mb-0">{{ errorMessage() }}</p>
+
+      @if (profileRequired()) {
+        <a class="alert-link" routerLink="/my-profile">
+          Create your tutor profile first.
+        </a>
+      }
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="alert alert-success" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
+  <!-- Publishes a new availability slot. -->
+  <form
+    class="card mb-4"
+    [formGroup]="slotForm"
+    (ngSubmit)="createSlot()"
+  >
+    <div class="card-body">
+      <h2 class="h4 mb-3">Publish a slot</h2>
+
+      <div class="row g-3">
+        <div class="col-12 col-md-4">
+          <label for="slot-date" class="form-label">
+            Date
+          </label>
+          <input
+            id="slot-date"
+            type="date"
+            class="form-control"
+            formControlName="date"
+          />
+
+          @if (
+            slotForm.controls.date.touched &&
+            slotForm.controls.date.invalid
+          ) {
+            <div class="text-danger small mt-1">
+              Date is required.
+            </div>
+          }
+        </div>
+
+        <div class="col-12 col-md-4">
+          <label for="start-time" class="form-label">
+            Start time
+          </label>
+          <input
+            id="start-time"
+            type="time"
+            class="form-control"
+            formControlName="startTime"
+          />
+
+          @if (
+            slotForm.controls.startTime.touched &&
+            slotForm.controls.startTime.invalid
+          ) {
+            <div class="text-danger small mt-1">
+              Start time is required.
+            </div>
+          }
+        </div>
+
+        <div class="col-12 col-md-4">
+          <label for="duration" class="form-label">
+            Duration in minutes
+          </label>
+          <input
+            id="duration"
+            type="number"
+            class="form-control"
+            formControlName="durationMinutes"
+            min="30"
+            max="180"
+            step="30"
+          />
+
+          @if (
+            slotForm.controls.durationMinutes.touched &&
+            slotForm.controls.durationMinutes.invalid
+          ) {
+            <div class="text-danger small mt-1">
+              Duration must be between 30 and 180 minutes.
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="isSaving()"
+      >
+        @if (isSaving()) {
+          Publishing...
+        } @else {
+          Publish slot
+        }
+      </button>
+    </div>
+  </form>
+
+  <!-- Lists the tutor's available and booked slots. -->
+  <section aria-labelledby="slot-list-title">
+    <h2 id="slot-list-title" class="h4 mb-3">
+      Existing slots
+    </h2>
+
+    @if (isLoading()) {
+      <div class="d-flex align-items-center gap-2" role="status">
+        <div class="spinner-border" aria-hidden="true"></div>
+        <span>Loading slots...</span>
+      </div>
+    } @else if (slots().length === 0) {
+      <div class="alert alert-info" role="status">
+        You have not published any availability slots yet.
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-striped align-middle">
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Start time</th>
+              <th scope="col">Duration</th>
+              <th scope="col">Status</th>
+              <th scope="col">Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (slot of slots(); track slot._id) {
+              <tr>
+                <td>{{ slot.date | date: 'mediumDate' }}</td>
+                <td>{{ slot.startTime }}</td>
+                <td>{{ slot.durationMinutes }} minutes</td>
+                <td>
+                  @if (slot.isBooked) {
+                    <span class="badge text-bg-warning">Booked</span>
+                  } @else {
+                    <span class="badge text-bg-success">Available</span>
+                  }
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger"
+                    [disabled]="
+                      slot.isBooked || deletingSlotId() === slot._id
+                    "
+                    (click)="deleteSlot(slot)"
+                  >
+                    @if (deletingSlotId() === slot._id) {
+                      Deleting...
+                    } @else {
+                      Delete
+                    }
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>

@@ -1,0 +1,115 @@
+<!-- A3 Task 9: Provides shared, role-based navigation across the application. -->
+<header class="navbar navbar-dark bg-primary shadow-sm">
+  <div class="container py-2">
+    <a
+      class="navbar-brand d-flex align-items-center gap-2"
+      routerLink="/dashboard"
+      aria-label="StudyBridge dashboard"
+    >
+      <img
+        class="app-logo"
+        src="/studybridge-logo.svg"
+        alt="StudyBridge logo"
+      >
+      <span>StudyBridge</span>
+    </a>
+
+    <nav
+      class="d-flex flex-wrap align-items-center justify-content-end gap-1"
+      aria-label="Main navigation"
+    >
+      @if (isAuthenticated()) {
+      <a
+        class="nav-link text-white"
+        routerLink="/dashboard"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        Dashboard
+      </a>
+
+      @switch (currentUser()?.role) {
+        @case ('learner') {
+        <a
+          class="nav-link text-white"
+          routerLink="/tutors"
+          routerLinkActive="active"
+        >
+          Search Tutors
+        </a>
+
+        <a
+          class="nav-link text-white"
+          routerLink="/my-bookings"
+          routerLinkActive="active"
+        >
+          My Bookings
+        </a>
+        }
+
+        @case ('tutor') {
+        <a
+          class="nav-link text-white"
+          routerLink="/my-profile"
+          routerLinkActive="active"
+        >
+          My Profile
+        </a>
+
+        <a
+          class="nav-link text-white"
+          routerLink="/my-slots"
+          routerLinkActive="active"
+        >
+          Publish a Slot
+        </a>
+
+        <a
+          class="nav-link text-white"
+          routerLink="/my-sessions"
+          routerLinkActive="active"
+        >
+          My Sessions
+        </a>
+        }
+      }
+
+      <button
+        class="btn btn-light btn-sm ms-2"
+        type="button"
+        [disabled]="isLoggingOut()"
+        (click)="logout()"
+      >
+        {{ isLoggingOut() ? 'Logging out...' : 'Logout' }}
+      </button>
+      } @else {
+      <a
+        class="nav-link text-white"
+        routerLink="/login"
+        routerLinkActive="active"
+      >
+        Login
+      </a>
+
+      <a
+        class="btn btn-light btn-sm"
+        routerLink="/register"
+      >
+        Register
+      </a>
+      }
+    </nav>
+  </div>
+</header>
+
+<!-- Renders the active Angular page inside the shared layout. -->
+<main class="app-content">
+  <router-outlet />
+</main>
+
+<!-- Provides basic application information on every page. -->
+<footer class="border-top bg-light py-3">
+  <div class="container text-center text-muted small">
+    StudyBridge · Find tutors, publish availability, and manage learning sessions.
+  </div>
+</footer>

@@ -1,0 +1,208 @@
+<!-- A3 Task 5: Renders the tutor profile create and edit form. -->
+<div class="container py-4">
+  <header class="mb-4">
+    <h1>
+      @if (isEditMode()) {
+        Edit tutor profile
+      } @else {
+        Create tutor profile
+      }
+    </h1>
+
+    <p class="text-muted">
+      Complete your profile before publishing availability slots.
+    </p>
+  </header>
+
+  @if (isLoading()) {
+    <div class="d-flex align-items-center gap-2" role="status">
+      <div class="spinner-border" aria-hidden="true"></div>
+      <span>Loading tutor profile...</span>
+    </div>
+  } @else {
+    @if (errorMessage()) {
+      <div class="alert alert-danger" role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    @if (successMessage()) {
+      <div class="alert alert-success" role="status">
+        {{ successMessage() }}
+      </div>
+    }
+
+    <!-- Creates or fully replaces the tutor profile. -->
+    <form
+      class="card"
+      [formGroup]="profileForm"
+      (ngSubmit)="saveProfile()"
+    >
+      <div class="card-body">
+        <!-- A3 HD Task 3: Displays and uploads the tutor's persisted profile photo. -->
+        <section class="mb-4" aria-labelledby="profile-photo-heading">
+          <h2 id="profile-photo-heading" class="h5">Profile photo</h2>
+
+          <div class="d-flex flex-column flex-md-row align-items-md-center gap-3">
+            <app-tutor-avatar
+              [photoUrl]="currentPhotoUrl()"
+              [fullName]="user()?.fullName ?? 'Tutor'"
+              size="large"
+            />
+
+            <div class="flex-grow-1">
+              @if (isEditMode()) {
+                <label for="profile-photo" class="form-label">
+                  Choose a new photo
+                </label>
+                <input
+                  id="profile-photo"
+                  class="form-control"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  (change)="selectPhoto($event)"
+                />
+                <div class="form-text">
+                  JPEG, PNG, or WebP. Maximum 5 MB.
+                </div>
+
+                @if (selectedPhoto()) {
+                  <p class="small mb-2 mt-2">
+                    Selected: {{ selectedPhoto()?.name }}
+                  </p>
+                }
+
+                @if (photoErrorMessage()) {
+                  <div class="text-danger small mt-2" role="alert">
+                    {{ photoErrorMessage() }}
+                  </div>
+                }
+
+                <button
+                  type="button"
+                  class="btn btn-outline-primary mt-2"
+                  [disabled]="!selectedPhoto() || isUploadingPhoto()"
+                  (click)="uploadPhoto()"
+                >
+                  @if (isUploadingPhoto()) {
+                    Uploading...
+                  } @else {
+                    Upload photo
+                  }
+                </button>
+              } @else {
+                <p class="text-muted mb-0">
+                  Create your tutor profile before uploading a photo.
+                </p>
+              }
+            </div>
+          </div>
+        </section>
+
+        <div class="mb-3">
+          <label for="bio" class="form-label">
+            Biography
+          </label>
+
+          <textarea
+            id="bio"
+            class="form-control"
+            formControlName="bio"
+            rows="5"
+            maxlength="500"
+          ></textarea>
+
+          <div class="form-text">
+            {{ profileForm.controls.bio.value.length }} / 500 characters
+          </div>
+
+          @if (
+            profileForm.controls.bio.touched &&
+            profileForm.controls.bio.hasError('maxlength')
+          ) {
+            <div class="text-danger small mt-1">
+              Biography cannot exceed 500 characters.
+            </div>
+          }
+        </div>
+
+        <div class="mb-3">
+          <label for="hourly-rate" class="form-label">
+            Hourly rate
+          </label>
+
+          <div class="input-group">
+            <span class="input-group-text">$</span>
+            <input
+              id="hourly-rate"
+              type="number"
+              class="form-control"
+              formControlName="hourlyRate"
+              min="5"
+              max="200"
+              step="1"
+            />
+          </div>
+
+          @if (
+            profileForm.controls.hourlyRate.touched &&
+            profileForm.controls.hourlyRate.invalid
+          ) {
+            <div class="text-danger small mt-1">
+              Hourly rate must be between $5 and $200.
+            </div>
+          }
+        </div>
+
+        <div class="mb-3">
+          <label for="subjects" class="form-label">
+            Subjects
+          </label>
+
+          <select
+            id="subjects"
+            class="form-select"
+            formControlName="subjects"
+            multiple
+            size="5"
+          >
+            @for (subject of subjects(); track subject._id) {
+              <option [value]="subject._id">
+                {{ subject.name }}
+              </option>
+            }
+          </select>
+
+          <div class="form-text">
+            Hold Command on macOS or Ctrl on Windows to select multiple subjects.
+          </div>
+
+          @if (
+            profileForm.controls.subjects.touched &&
+            profileForm.controls.subjects.invalid
+          ) {
+            <div class="text-danger small mt-1">
+              Select at least one subject.
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="isSaving()"
+        >
+          @if (isSaving()) {
+            Saving...
+          } @else if (isEditMode()) {
+            Update profile
+          } @else {
+            Create profile
+          }
+        </button>
+      </div>
+    </form>
+  }
+</div>

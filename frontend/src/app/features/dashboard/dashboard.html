@@ -1,0 +1,273 @@
+<!-- A3 Task 3: Renders role-specific content within one dashboard route. -->
+<div class="container py-4">
+    @if (user(); as currentUser) {
+    <!-- Displays the greeting returned by GET /auth/me. -->
+    <header class="mb-4">
+        <h1>{{ currentUser.greeting }}</h1>
+        <p class="text-muted mb-0">
+            Role: {{ currentUser.role }}
+        </p>
+    </header>
+
+    @if (isLoading()) {
+    <div class="d-flex align-items-center gap-2" role="status">
+        <div class="spinner-border" aria-hidden="true"></div>
+        <span>Loading dashboard...</span>
+    </div>
+    } @else if (errorMessage()) {
+    <div class="alert alert-danger" role="alert">
+        {{ errorMessage() }}
+    </div>
+    } @else {
+    @switch (currentUser.role) {
+    @case ('learner') {
+    <!-- Learner dashboard: booking totals by status. -->
+    <section aria-labelledby="learner-dashboard-title">
+        <h2 id="learner-dashboard-title" class="h4 mb-3">
+            My booking summary
+        </h2>
+
+        <div class="row g-3">
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="h6 text-muted">Requested</h3>
+                        <p class="display-6 mb-0">
+                            {{ bookingCounts().requested }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="h6 text-muted">Confirmed</h3>
+                        <p class="display-6 mb-0">
+                            {{ bookingCounts().confirmed }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="h6 text-muted">Completed</h3>
+                        <p class="display-6 mb-0">
+                            {{ bookingCounts().completed }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="h6 text-muted">Cancelled</h3>
+                        <p class="display-6 mb-0">
+                            {{ bookingCounts().cancelled }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    }
+    @case ('tutor') {
+    <!-- Tutor dashboard: booking and open-slot totals. -->
+    <section aria-labelledby="tutor-dashboard-title">
+        <h2 id="tutor-dashboard-title" class="h4 mb-3">
+            My tutoring summary
+        </h2>
+
+        <div class="row g-3">
+            <div class="col-12 col-sm-6 col-lg">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="h6 text-muted">Requested</h3>
+                        <p class="display-6 mb-0">
+                            {{ bookingCounts().requested }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="h6 text-muted">Confirmed</h3>
+                        <p class="display-6 mb-0">
+                            {{ bookingCounts().confirmed }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="h6 text-muted">Completed</h3>
+                        <p class="display-6 mb-0">
+                            {{ bookingCounts().completed }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="h6 text-muted">Cancelled</h3>
+                        <p class="display-6 mb-0">
+                            {{ bookingCounts().cancelled }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg">
+                <div class="card h-100 border-primary">
+                    <div class="card-body">
+                        <h3 class="h6 text-muted">Open slots</h3>
+                        <p class="display-6 mb-0">
+                            {{ openSlotCount() }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    }
+    @case ('admin') {
+    <!-- Admin dashboard: marketplace statistics. -->
+    @if (analytics(); as adminAnalytics) {
+    <section aria-labelledby="admin-dashboard-title">
+        <h2 id="admin-dashboard-title" class="h4 mb-3">
+            Marketplace summary
+        </h2>
+
+        <div class="row g-3">
+            <div class="col-12 col-sm-6 col-xl">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="h6 text-muted">Subjects</h3>
+                        <p class="display-6 mb-0">
+                            {{ subjectCount() }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="h6 text-muted">Total bookings</h3>
+                        <p class="display-6 mb-0">
+                            {{ adminAnalytics.totalBookings }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="h6 text-muted">Completion rate</h3>
+                        <p class="display-6 mb-0">
+                            {{
+                            adminAnalytics.completionRate
+                            | number: '1.0-2'
+                            }}%
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h3 class="h6 text-muted">Cancellation rate</h3>
+                        <p class="display-6 mb-0">
+                            {{
+                            adminAnalytics.cancellationRate
+                            | number: '1.0-2'
+                            }}%
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl">
+                <div class="card h-100 border-primary">
+                    <div class="card-body">
+                        <h3 class="h6 text-muted">Estimated revenue</h3>
+                        <p class="h3 mb-0">
+                            {{
+                            adminAnalytics.estimatedRevenue
+                            | currency: 'AUD' : 'symbol' : '1.2-2'
+                            }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Displays the most-booked subjects and top tutors. -->
+        <div class="row g-4 mt-1">
+            <div class="col-12 col-lg-6">
+                <h3 class="h5 mb-3">Top subjects</h3>
+
+                <ol class="list-group list-group-numbered">
+                    @for (
+                    subject of adminAnalytics.topSubjects;
+                    track subject.subjectId
+                    ) {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="ms-2">
+                            {{ subject.subjectName }}
+                        </span>
+
+                        <span class="badge text-bg-primary rounded-pill">
+                            {{ subject.bookingCount }} bookings
+                        </span>
+                    </li>
+                    } @empty {
+                    <li class="list-group-item text-muted">
+                        No subject booking data is available.
+                    </li>
+                    }
+                </ol>
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <h3 class="h5 mb-3">Top tutors</h3>
+
+                <ol class="list-group list-group-numbered">
+                    @for (
+                    tutor of adminAnalytics.topTutors;
+                    track tutor.tutorId
+                    ) {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="ms-2">
+                            {{ tutor.fullName }}
+                        </span>
+
+                        <span class="badge text-bg-success rounded-pill">
+                            {{ tutor.completedBookingCount }} completed
+                        </span>
+                    </li>
+                    } @empty {
+                    <li class="list-group-item text-muted">
+                        No completed tutor sessions are available.
+                    </li>
+                    }
+                </ol>
+            </div>
+        </div>
+    </section>
+    }
+    }
+    }
+    }
+    }
+</div>
